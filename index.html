@@ -91,15 +91,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 <div id="key-modal">
   <div id="key-box">
-    <h2>🔑 One-time setup — free Gemini key</h2>
-    <p>This app uses Google's Gemini AI (free, no credit card). Get your key in 1 minute:</p>
+    <h2>🔑 Free setup — takes 2 minutes</h2>
+    <p>This app is completely free. You need a free Google AI key — no credit card, no payment ever.</p>
     <ol>
       <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></li>
       <li>Sign in with any Google account</li>
       <li>Click <strong>"Create API key"</strong></li>
       <li>Copy it and paste below</li>
     </ol>
-    <input type="password" id="key-input" placeholder="Paste your key here (AIza...)" />
+    <input type="password" id="key-input" placeholder="Paste your key here — starts with AIza..." />
     <button id="key-save" onclick="saveKey()">Start learning SQL →</button>
     <p id="key-note">Your key is saved in your browser only. Never shared with anyone.</p>
   </div>
@@ -164,7 +164,7 @@ let currentTopic = null;
 let doneTopics = new Set(JSON.parse(localStorage.getItem("sql_done") || "[]"));
 let conversationHistory = [];
 let isLoading = false;
-let geminiKey = localStorage.getItem("sql_gemini_key") || "AQ.Ab8RN6K746n-KXIAw_TxKuL-aRyxySn0DR0jXjTD6poiBBc07g";
+let geminiKey = localStorage.getItem("sql_gemini_key") || "";
 
 function saveKey() {
   const val = document.getElementById("key-input").value.trim();
@@ -243,7 +243,7 @@ async function callGemini(userMessage) {
   const messages = [...conversationHistory, { role: "user", parts: [{ text: userMessage }] }];
   const systemText = buildSystem(currentTopic);
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
