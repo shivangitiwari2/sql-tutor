@@ -164,7 +164,7 @@ let currentTopic = null;
 let doneTopics = new Set(JSON.parse(localStorage.getItem("sql_done") || "[]"));
 let conversationHistory = [];
 let isLoading = false;
-let geminiKey = localStorage.getItem("sql_gemini_key") || "";
+let geminiKey = localStorage.getItem("sql_gemini_key") || "AQ.Ab8RN6K746n-KXIAw_TxKuL-aRyxySn0DR0jXjTD6poiBBc07g";
 
 function saveKey() {
   const val = document.getElementById("key-input").value.trim();
