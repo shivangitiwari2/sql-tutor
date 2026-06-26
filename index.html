@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SQL Tutor — 0 to 100</title>
-<script src="https://js.puter.com/v2/"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,34 +18,28 @@
 }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
 #app { display: flex; height: 100vh; }
-
-/* Sidebar */
 #sidebar { width: 230px; min-width: 230px; border-right: 1px solid var(--border); background: var(--surface2); display: flex; flex-direction: column; overflow-y: auto; }
 #sidebar-header { padding: 16px; border-bottom: 1px solid var(--border); }
 #sidebar-header h1 { font-size: 15px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
 #sidebar-header p { font-size: 12px; color: var(--text3); margin-top: 3px; }
 .topic-group { padding: 8px 0; }
 .topic-group-label { font-size: 10px; font-weight: 600; color: var(--text3); padding: 4px 16px; text-transform: uppercase; letter-spacing: 0.06em; }
-.topic-btn { width: 100%; text-align: left; padding: 7px 16px; font-size: 13px; color: var(--text2); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s; }
+.topic-btn { width: 100%; text-align: left; padding: 7px 16px; font-size: 13px; color: var(--text2); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; }
 .topic-btn:hover { background: var(--surface); color: var(--text); }
 .topic-btn.active { background: var(--accent-bg); color: var(--accent-text); font-weight: 500; }
-.topic-btn .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: background 0.2s; }
+.topic-btn .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
 .topic-btn.done .dot { background: #16a34a; }
 .topic-btn.active .dot { background: var(--accent); }
 #progress-wrap { padding: 12px 16px; border-top: 1px solid var(--border); margin-top: auto; }
 #progress-wrap p { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
 #progress-track { background: var(--border); border-radius: 99px; height: 5px; }
 #progress-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.4s; }
-
-/* Main area */
 #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 #topbar { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: var(--surface); }
 #topic-title { font-size: 15px; font-weight: 500; flex: 1; color: var(--text); }
 .badge { font-size: 11px; padding: 3px 9px; border-radius: 99px; font-weight: 500; }
 .badge-level { background: var(--accent-bg); color: var(--accent-text); }
 .badge-type { background: var(--bg); color: var(--text2); border: 1px solid var(--border); }
-
-/* Chat */
 #chat-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
 .msg { display: flex; gap: 10px; max-width: 90%; }
 .msg.user { align-self: flex-end; flex-direction: row-reverse; }
@@ -59,16 +52,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .msg.user .bubble { background: var(--accent-bg); border-radius: 12px 2px 12px 12px; }
 .bubble pre { background: #1e1e1e; color: #d4d4d4; border-radius: var(--radius); padding: 10px 12px; margin: 8px 0; font-family: var(--mono); font-size: 13px; overflow-x: auto; white-space: pre-wrap; }
 .bubble code { font-family: var(--mono); font-size: 12px; background: var(--bg); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--border); }
-
-/* MCQ */
 .mcq-options { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-.mcq-btn { text-align: left; padding: 8px 12px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); font-size: 13px; cursor: pointer; color: var(--text); font-family: inherit; transition: all 0.15s; }
+.mcq-btn { text-align: left; padding: 8px 12px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); font-size: 13px; cursor: pointer; color: var(--text); font-family: inherit; }
 .mcq-btn:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
 .mcq-btn.correct { border-color: var(--success-border); background: var(--success-bg); color: var(--success-text); font-weight: 500; }
 .mcq-btn.wrong { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger-text); }
 .mcq-btn:disabled { cursor: default; }
-
-/* Input */
 #input-area { padding: 14px 20px; border-top: 1px solid var(--border); background: var(--surface2); }
 #sql-input { width: 100%; font-family: var(--mono); font-size: 13px; padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text); resize: none; height: 68px; line-height: 1.5; margin-bottom: 8px; }
 #sql-input:focus { outline: none; border-color: var(--accent); }
@@ -79,32 +68,40 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 #hint-btn { padding: 7px 14px; border-radius: var(--radius); border: 1px solid var(--border); background: none; color: var(--text2); font-size: 13px; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; }
 #hint-btn:hover { background: var(--surface); }
 #input-tip { font-size: 11px; color: var(--text3); margin-left: auto; }
-
-/* Typing animation */
 .typing-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--text3); animation: blink 1.2s infinite; margin: 0 2px; }
 .typing-dot:nth-child(2) { animation-delay: 0.2s; }
 .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 @keyframes blink { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
 
-/* Login overlay */
-#login-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 999; }
-#login-box { background: var(--surface); border-radius: 16px; padding: 32px; width: 400px; border: 1px solid var(--border); text-align: center; }
-#login-box h2 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
-#login-box p { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 24px; }
-#login-btn { padding: 10px 28px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-size: 14px; cursor: pointer; font-weight: 500; font-family: inherit; }
-#login-btn:hover { background: #1d4ed8; }
-#login-note { font-size: 12px; color: var(--text3); margin-top: 14px; }
+/* API key modal */
+#key-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 999; }
+#key-box { background: var(--surface); border-radius: 16px; padding: 32px; width: 420px; border: 1px solid var(--border); }
+#key-box h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+#key-box p { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 6px; }
+#key-box ol { font-size: 13px; color: var(--text2); line-height: 2; margin: 10px 0 16px 18px; }
+#key-box ol a { color: var(--accent); }
+#key-input { width: 100%; padding: 9px 12px; border-radius: var(--radius); border: 1px solid var(--border); font-size: 13px; font-family: var(--mono); margin-bottom: 10px; background: var(--bg); color: var(--text); }
+#key-input:focus { outline: none; border-color: var(--accent); }
+#key-save { padding: 9px 24px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-size: 13px; cursor: pointer; font-weight: 500; font-family: inherit; width: 100%; }
+#key-save:hover { background: #1d4ed8; }
+#key-note { font-size: 11px; color: var(--text3); margin-top: 10px; text-align: center; }
 </style>
 </head>
 <body>
 
-<div id="login-overlay">
-  <div id="login-box">
-    <div style="font-size:36px;margin-bottom:12px;">🗄️</div>
-    <h2>SQL Tutor — 0 to 100</h2>
-    <p>Sign in with your free Puter account to start learning. No credit card, no API key — completely free.</p>
-    <button id="login-btn" onclick="signIn()"><i class="ti ti-brand-google"></i> Sign in to start</button>
-    <p id="login-note">Puter is free. Your progress is saved automatically.</p>
+<div id="key-modal">
+  <div id="key-box">
+    <h2>🔑 One-time setup — free Gemini key</h2>
+    <p>This app uses Google's Gemini AI (free, no credit card). Get your key in 1 minute:</p>
+    <ol>
+      <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></li>
+      <li>Sign in with any Google account</li>
+      <li>Click <strong>"Create API key"</strong></li>
+      <li>Copy it and paste below</li>
+    </ol>
+    <input type="password" id="key-input" placeholder="Paste your key here (AIza...)" />
+    <button id="key-save" onclick="saveKey()">Start learning SQL →</button>
+    <p id="key-note">Your key is saved in your browser only. Never shared with anyone.</p>
   </div>
 </div>
 
@@ -125,7 +122,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <span id="topic-title">Pick a topic to start</span>
       <span class="badge badge-level" id="level-badge">Beginner</span>
       <span class="badge badge-type" id="type-badge">Concept</span>
-      <span id="user-name" style="font-size:12px;color:var(--text3);margin-left:auto;"></span>
+      <button onclick="changeKey()" style="margin-left:auto;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;">change key</button>
     </div>
     <div id="chat-area"></div>
     <div id="input-area">
@@ -141,62 +138,49 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 <script>
 const TOPICS = [
-  { id:"select_basics",    label:"SELECT basics",          group:"Foundations",      level:"Beginner",     type:"Concept+MCQ" },
-  { id:"where_filter",     label:"WHERE & filters",        group:"Foundations",      level:"Beginner",     type:"MCQ+Query" },
-  { id:"order_limit",      label:"ORDER BY & LIMIT",       group:"Foundations",      level:"Beginner",     type:"MCQ+Query" },
-  { id:"distinct_null",    label:"DISTINCT & NULL",        group:"Foundations",      level:"Beginner",     type:"MCQ" },
-  { id:"aggregate",        label:"COUNT, SUM, AVG",        group:"Aggregates",       level:"Beginner",     type:"Query" },
-  { id:"group_by",         label:"GROUP BY",               group:"Aggregates",       level:"Intermediate", type:"Query" },
-  { id:"having",           label:"HAVING",                 group:"Aggregates",       level:"Intermediate", type:"Query" },
-  { id:"joins_intro",      label:"JOINs — intro",          group:"JOINs",            level:"Intermediate", type:"Concept+MCQ" },
-  { id:"inner_join",       label:"INNER JOIN",             group:"JOINs",            level:"Intermediate", type:"Query" },
-  { id:"left_right_join",  label:"LEFT & RIGHT JOIN",      group:"JOINs",            level:"Intermediate", type:"Query" },
-  { id:"self_cross_join",  label:"SELF & CROSS JOIN",      group:"JOINs",            level:"Intermediate", type:"MCQ+Query" },
-  { id:"subqueries",       label:"Subqueries",             group:"Advanced",         level:"Advanced",     type:"Query" },
-  { id:"cte",              label:"CTEs (WITH)",            group:"Advanced",         level:"Advanced",     type:"Query" },
-  { id:"window_intro",     label:"Window functions — intro",group:"Window Functions", level:"Advanced",     type:"Concept+MCQ" },
-  { id:"row_rank",         label:"ROW_NUMBER & RANK",      group:"Window Functions", level:"Advanced",     type:"Query" },
-  { id:"lead_lag",         label:"LEAD & LAG",             group:"Window Functions", level:"Advanced",     type:"Query" },
-  { id:"partitionby",      label:"PARTITION BY",           group:"Window Functions", level:"Advanced",     type:"Query" },
-  { id:"indexes",          label:"Indexes",                group:"Performance",      level:"Expert",       type:"Concept+MCQ" },
-  { id:"explain_plan",     label:"EXPLAIN & query plans",  group:"Performance",      level:"Expert",       type:"MCQ" },
-  { id:"transactions",     label:"Transactions & ACID",    group:"Expert Topics",    level:"Expert",       type:"Concept+MCQ" },
+  { id:"select_basics",   label:"SELECT basics",          group:"Foundations",      level:"Beginner",     type:"Concept+MCQ" },
+  { id:"where_filter",    label:"WHERE & filters",        group:"Foundations",      level:"Beginner",     type:"MCQ+Query" },
+  { id:"order_limit",     label:"ORDER BY & LIMIT",       group:"Foundations",      level:"Beginner",     type:"MCQ+Query" },
+  { id:"distinct_null",   label:"DISTINCT & NULL",        group:"Foundations",      level:"Beginner",     type:"MCQ" },
+  { id:"aggregate",       label:"COUNT, SUM, AVG",        group:"Aggregates",       level:"Beginner",     type:"Query" },
+  { id:"group_by",        label:"GROUP BY",               group:"Aggregates",       level:"Intermediate", type:"Query" },
+  { id:"having",          label:"HAVING",                 group:"Aggregates",       level:"Intermediate", type:"Query" },
+  { id:"joins_intro",     label:"JOINs — intro",          group:"JOINs",            level:"Intermediate", type:"Concept+MCQ" },
+  { id:"inner_join",      label:"INNER JOIN",             group:"JOINs",            level:"Intermediate", type:"Query" },
+  { id:"left_right_join", label:"LEFT & RIGHT JOIN",      group:"JOINs",            level:"Intermediate", type:"Query" },
+  { id:"self_cross_join", label:"SELF & CROSS JOIN",      group:"JOINs",            level:"Intermediate", type:"MCQ+Query" },
+  { id:"subqueries",      label:"Subqueries",             group:"Advanced",         level:"Advanced",     type:"Query" },
+  { id:"cte",             label:"CTEs (WITH)",            group:"Advanced",         level:"Advanced",     type:"Query" },
+  { id:"window_intro",    label:"Window functions — intro",group:"Window Functions", level:"Advanced",     type:"Concept+MCQ" },
+  { id:"row_rank",        label:"ROW_NUMBER & RANK",      group:"Window Functions", level:"Advanced",     type:"Query" },
+  { id:"lead_lag",        label:"LEAD & LAG",             group:"Window Functions", level:"Advanced",     type:"Query" },
+  { id:"partitionby",     label:"PARTITION BY",           group:"Window Functions", level:"Advanced",     type:"Query" },
+  { id:"indexes",         label:"Indexes",                group:"Performance",      level:"Expert",       type:"Concept+MCQ" },
+  { id:"explain_plan",    label:"EXPLAIN & query plans",  group:"Performance",      level:"Expert",       type:"MCQ" },
+  { id:"transactions",    label:"Transactions & ACID",    group:"Expert Topics",    level:"Expert",       type:"Concept+MCQ" },
 ];
 
 let currentTopic = null;
-let doneTopics = new Set();
+let doneTopics = new Set(JSON.parse(localStorage.getItem("sql_done") || "[]"));
 let conversationHistory = [];
 let isLoading = false;
+let geminiKey = localStorage.getItem("sql_gemini_key") || "";
 
-async function signIn() {
-  try {
-    const user = await puter.auth.signIn();
-    document.getElementById("login-overlay").style.display = "none";
-    document.getElementById("user-name").textContent = user.username || "";
-    await loadProgress();
-  } catch(e) {
-    alert("Sign in failed. Please try again.");
-  }
+function saveKey() {
+  const val = document.getElementById("key-input").value.trim();
+  if(!val) { alert("Please paste your Gemini API key."); return; }
+  geminiKey = val;
+  localStorage.setItem("sql_gemini_key", val);
+  document.getElementById("key-modal").style.display = "none";
 }
 
-async function loadProgress() {
-  try {
-    const raw = await puter.kv.get("sql_tutor_progress");
-    if(raw) {
-      const data = JSON.parse(raw);
-      doneTopics = new Set(data.done || []);
-    }
-  } catch(e) {}
-  buildSidebar();
-  updateProgress();
-  showWelcome();
+function changeKey() {
+  localStorage.removeItem("sql_gemini_key");
+  geminiKey = "";
+  document.getElementById("key-modal").style.display = "flex";
 }
 
-async function saveProgress() {
-  try {
-    await puter.kv.set("sql_tutor_progress", JSON.stringify({ done: [...doneTopics] }));
-  } catch(e) {}
-}
+if(geminiKey) document.getElementById("key-modal").style.display = "none";
 
 function buildSidebar() {
   const list = document.getElementById("topic-list");
@@ -223,26 +207,13 @@ function updateProgress() {
   const pct = Math.round((doneTopics.size / TOPICS.length) * 100);
   document.getElementById("progress-fill").style.width = pct + "%";
   document.getElementById("progress-label").textContent = pct + "% complete";
-}
-
-function showWelcome() {
-  const chat = document.getElementById("chat-area");
-  chat.innerHTML = "";
-  const el = document.createElement("div");
-  el.className = "msg ai";
-  el.innerHTML = `<div class="avatar ai-av"><i class="ti ti-robot"></i></div>
-    <div class="bubble">
-      Hey! I'm your SQL tutor. Pick any topic from the left to start — from <code>SELECT</code> basics all the way to window functions, indexes, and transactions.<br><br>
-      I'll explain the concept, quiz you, and if you get something wrong I'll break down exactly why — then give you another question to reinforce it. Let's go! 🎯
-    </div>`;
-  chat.appendChild(el);
+  localStorage.setItem("sql_done", JSON.stringify([...doneTopics]));
 }
 
 async function loadTopic(topic) {
   if(isLoading) return;
   currentTopic = topic;
   conversationHistory = [];
-
   document.querySelectorAll(".topic-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("tbtn-" + topic.id).classList.add("active");
   document.getElementById("topic-title").textContent = topic.label;
@@ -252,73 +223,71 @@ async function loadTopic(topic) {
   document.getElementById("sql-input").value = "";
 
   const isMCQ = topic.type.includes("MCQ");
-  const startMsg = `Teach me about "${topic.label}" (${topic.level} level).
-
-First, give a clear 2-3 sentence explanation of the concept with a simple example.
-
-Then ask me ONE question. ${isMCQ
-    ? 'Make it a multiple choice question with 4 options. At the very end of your response, on its own line, output this exact JSON (no extra text around it): {"mcq":["A. option text","B. option text","C. option text","D. option text"],"answer":"A"}'
-    : 'Ask me to write a SQL query. Use a simple realistic table like employees, orders, or students.'
-  }`;
+  const startMsg = `Teach me about "${topic.label}" (${topic.level} level). First give a clear 2-3 sentence explanation with a simple example. Then ask me ONE question. ${isMCQ ? 'Make it multiple choice with 4 options. At the very end output only this JSON on its own line: {"mcq":["A. text","B. text","C. text","D. text"],"answer":"A"}' : 'Ask me to write a SQL query using a simple table like employees, orders, or students.'}`;
 
   await sendToAI(startMsg, false);
 }
 
-function buildSystemPrompt(topic) {
-  return `You are a friendly, expert SQL tutor teaching ${topic.label} at ${topic.level} level.
-
-Rules:
-- Always explain concepts clearly and simply
+function buildSystem(topic) {
+  return `You are a friendly expert SQL tutor teaching "${topic.label}" at ${topic.level} level.
+- Explain concepts simply and clearly
 - Ask one question at a time
-- When evaluating answers:
-  - If CORRECT: say "Correct!" briefly explain why it's right, then ask a slightly harder follow-up
-  - If WRONG: explain exactly what's wrong and why, show the correct answer, then give a new similar question to try again
-- For MCQ questions: always end your response with a JSON block on its own line: {"mcq":["A. text","B. text","C. text","D. text"],"answer":"B"}
-- For SQL queries: after evaluation, show the correct SQL with a brief explanation
-- Be encouraging but never say something is correct when it is wrong
-- Keep responses concise — 3-6 sentences max per turn`;
+- If answer is CORRECT: say "Correct!" briefly, then ask a slightly harder follow-up
+- If answer is WRONG: explain exactly what's wrong and why, show correct answer, give a new similar question
+- For MCQ: always end with JSON on its own line: {"mcq":["A. text","B. text","C. text","D. text"],"answer":"B"}
+- For SQL queries: after evaluation show the correct SQL with brief explanation
+- Keep responses concise — 3-6 sentences max`;
+}
+
+async function callGemini(userMessage) {
+  const messages = [...conversationHistory, { role: "user", parts: [{ text: userMessage }] }];
+  const systemText = buildSystem(currentTopic);
+
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: systemText }] },
+      contents: messages
+    })
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response received.";
 }
 
 async function sendToAI(userMessage, addToHistory = true) {
-  if(!currentTopic) return;
+  if(!currentTopic || !geminiKey) return;
   isLoading = true;
   setButtonState(true);
 
   if(addToHistory) {
     addUserMessage(userMessage);
-    conversationHistory.push({ role: "user", content: userMessage });
+    conversationHistory.push({ role: "user", parts: [{ text: userMessage }] });
   }
 
   addTypingIndicator();
 
   try {
-    const systemPrompt = buildSystemPrompt(currentTopic);
-    const messages = addToHistory
-      ? conversationHistory
-      : [{ role: "user", content: userMessage }];
-
-    const response = await puter.ai.chat(
-      messages.map(m => ({ role: m.role, content: m.content })),
-      { model: "gemini-2.0-flash", system: systemPrompt }
-    );
-
-    const reply = typeof response === "string" ? response : response?.message?.content?.[0]?.text || response?.text || String(response);
-
+    const reply = await callGemini(userMessage);
     removeTypingIndicator();
-    conversationHistory.push({ role: "assistant", content: reply });
-    if(!addToHistory) conversationHistory = [{ role: "assistant", content: reply }];
+
+    if(addToHistory) {
+      conversationHistory.push({ role: "model", parts: [{ text: reply }] });
+    } else {
+      conversationHistory = [{ role: "model", parts: [{ text: reply }] }];
+    }
+
     renderAIMessage(reply);
 
-    if(reply.match(/\bcorrect\b|\bwell done\b|\bgreat job\b|\bexactly right\b|\bperfect\b/i)) {
+    if(reply.match(/\bcorrect\b|\bwell done\b|\bgreat job\b|\bperfect\b|\bexactly right\b/i)) {
       doneTopics.add(currentTopic.id);
       document.getElementById("tbtn-" + currentTopic.id).classList.add("done");
       updateProgress();
-      saveProgress();
     }
   } catch(e) {
     removeTypingIndicator();
-    addErrorMessage("Something went wrong. Please try again.");
-    console.error(e);
+    addErrorMessage("Error: " + e.message + " — check your API key or try again.");
   }
 
   isLoading = false;
@@ -336,49 +305,35 @@ function setButtonState(loading) {
 function renderAIMessage(text) {
   const chat = document.getElementById("chat-area");
   let mcqData = null, cleanText = text;
-
   const mcqMatch = text.match(/\{[\s\S]*?"mcq"[\s\S]*?\}/);
   if(mcqMatch) {
-    try {
-      mcqData = JSON.parse(mcqMatch[0]);
-      cleanText = text.replace(mcqMatch[0], "").trim();
-    } catch(e) {}
+    try { mcqData = JSON.parse(mcqMatch[0]); cleanText = text.replace(mcqMatch[0], "").trim(); } catch(e) {}
   }
-
   const formatted = cleanText
     .replace(/```sql([\s\S]*?)```/g, (_, c) => `<pre>${esc(c.trim())}</pre>`)
     .replace(/```([\s\S]*?)```/g, (_, c) => `<pre>${esc(c.trim())}</pre>`)
     .replace(/`([^`]+)`/g, (_, c) => `<code>${esc(c)}</code>`)
     .replace(/\*\*(.*?)\*\*/g, (_, c) => `<strong>${c}</strong>`)
     .replace(/\n/g, "<br>");
-
   const msg = document.createElement("div");
   msg.className = "msg ai";
-  msg.innerHTML = `<div class="avatar ai-av"><i class="ti ti-robot"></i></div>
-    <div class="bubble">${formatted}${mcqData ? renderMCQ(mcqData) : ""}</div>`;
+  msg.innerHTML = `<div class="avatar ai-av"><i class="ti ti-robot"></i></div><div class="bubble">${formatted}${mcqData ? renderMCQ(mcqData) : ""}</div>`;
   chat.appendChild(msg);
   chat.scrollTop = chat.scrollHeight;
-
-  document.getElementById("sql-input").placeholder = mcqData
-    ? "Pick A/B/C/D above, or type your reasoning..."
-    : "Write your SQL query here...";
+  document.getElementById("sql-input").placeholder = mcqData ? "Pick A/B/C/D above, or type your reasoning..." : "Write your SQL query here...";
 }
 
 function renderMCQ(data) {
   const letters = ["A","B","C","D"];
-  const opts = data.mcq.map((opt, i) =>
+  return `<div class="mcq-options">${data.mcq.map((opt,i) =>
     `<button class="mcq-btn" onclick="pickMCQ(this,'${letters[i]}','${data.answer}')">${opt}</button>`
-  ).join("");
-  return `<div class="mcq-options">${opts}</div>`;
+  ).join("")}</div>`;
 }
 
 function pickMCQ(btn, chosen, correct) {
-  const allBtns = btn.closest(".mcq-options").querySelectorAll(".mcq-btn");
-  allBtns.forEach(b => {
+  btn.closest(".mcq-options").querySelectorAll(".mcq-btn").forEach(b => {
     b.disabled = true;
-    if(b.textContent.trim().startsWith(correct + ".") || b.textContent.trim().startsWith(correct + " ")) {
-      b.classList.add("correct");
-    }
+    if(b.textContent.trim().startsWith(correct)) b.classList.add("correct");
   });
   if(chosen !== correct) btn.classList.add("wrong");
   sendToAI(`My answer is ${chosen}: ${btn.textContent.trim()}`);
@@ -388,35 +343,27 @@ function addUserMessage(text) {
   const chat = document.getElementById("chat-area");
   const msg = document.createElement("div");
   msg.className = "msg user";
-  msg.innerHTML = `<div class="avatar user-av"><i class="ti ti-user"></i></div>
-    <div class="bubble">${esc(text).replace(/\n/g, "<br>")}</div>`;
-  chat.appendChild(msg);
-  chat.scrollTop = chat.scrollHeight;
+  msg.innerHTML = `<div class="avatar user-av"><i class="ti ti-user"></i></div><div class="bubble">${esc(text).replace(/\n/g,"<br>")}</div>`;
+  chat.appendChild(msg); chat.scrollTop = chat.scrollHeight;
 }
 
 function addErrorMessage(text) {
   const chat = document.getElementById("chat-area");
   const msg = document.createElement("div");
   msg.className = "msg ai";
-  msg.innerHTML = `<div class="avatar ai-av"><i class="ti ti-alert-circle"></i></div>
-    <div class="bubble" style="color:var(--danger-text);border-color:var(--danger-border)">${text}</div>`;
-  chat.appendChild(msg);
-  chat.scrollTop = chat.scrollHeight;
+  msg.innerHTML = `<div class="avatar ai-av"><i class="ti ti-alert-circle"></i></div><div class="bubble" style="color:var(--danger-text);border-color:var(--danger-border)">${text}</div>`;
+  chat.appendChild(msg); chat.scrollTop = chat.scrollHeight;
 }
 
 function addTypingIndicator() {
   const chat = document.getElementById("chat-area");
   const el = document.createElement("div");
   el.className = "msg ai"; el.id = "typing-indicator";
-  el.innerHTML = `<div class="avatar ai-av"><i class="ti ti-robot"></i></div>
-    <div class="bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;
-  chat.appendChild(el);
-  chat.scrollTop = chat.scrollHeight;
+  el.innerHTML = `<div class="avatar ai-av"><i class="ti ti-robot"></i></div><div class="bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;
+  chat.appendChild(el); chat.scrollTop = chat.scrollHeight;
 }
 
-function removeTypingIndicator() {
-  document.getElementById("typing-indicator")?.remove();
-}
+function removeTypingIndicator() { document.getElementById("typing-indicator")?.remove(); }
 
 async function submitAnswer() {
   const input = document.getElementById("sql-input");
@@ -428,33 +375,23 @@ async function submitAnswer() {
 
 async function askHint() {
   if(!currentTopic || isLoading) return;
-  await sendToAI("Can you give me a hint without revealing the full answer?");
+  await sendToAI("Give me a hint without revealing the full answer.");
 }
 
-function esc(t) {
-  return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-}
+function esc(t) { return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
 document.getElementById("sql-input").addEventListener("keydown", e => {
   if(e.key === "Enter" && e.ctrlKey) { e.preventDefault(); submitAnswer(); }
 });
 
-// Auto-check if already signed in
-(async () => {
-  try {
-    const isSignedIn = await puter.auth.isSignedIn();
-    if(isSignedIn) {
-      const user = await puter.auth.getUser();
-      document.getElementById("login-overlay").style.display = "none";
-      document.getElementById("user-name").textContent = user?.username || "";
-      await loadProgress();
-    } else {
-      buildSidebar();
-    }
-  } catch(e) {
-    buildSidebar();
-  }
-})();
+buildSidebar();
+updateProgress();
+
+const chat = document.getElementById("chat-area");
+const welcome = document.createElement("div");
+welcome.className = "msg ai";
+welcome.innerHTML = `<div class="avatar ai-av"><i class="ti ti-robot"></i></div><div class="bubble">Hey! I'm your SQL tutor. Pick any topic from the left to start — from <code>SELECT</code> basics all the way to window functions and transactions.<br><br>I'll explain the concept, quiz you, and if you get something wrong I'll break down exactly why — then give you another question. Let's go! 🎯</div>`;
+chat.appendChild(welcome);
 </script>
 </body>
 </html>
