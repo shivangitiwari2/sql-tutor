@@ -183,6 +183,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 </head>
 <body>
 
+<!-- Change Key Modal -->
+<div id="change-key-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1001;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:16px;padding:28px;width:380px;border:1px solid var(--border);">
+    <h2 style="font-size:17px;font-weight:600;margin-bottom:8px;">🔑 Update Gemini API Key</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:6px;line-height:1.6;">If you're seeing quota errors, get a fresh free key:</p>
+    <ol style="font-size:13px;color:var(--text2);line-height:2;margin:8px 0 14px 16px;">
+      <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent)">aistudio.google.com/apikey</a></li>
+      <li>Click <strong>Create API key in new project</strong></li>
+      <li>Copy the key (starts with AIza...)</li>
+      <li>Paste it below</li>
+    </ol>
+    <input type="password" id="new-key-input" placeholder="Paste new key here (AIza...)" style="width:100%;padding:9px 12px;border-radius:var(--radius);border:1px solid var(--border);font-size:13px;font-family:var(--mono);margin-bottom:10px;background:var(--bg);color:var(--text);" />
+    <div style="display:flex;gap:8px;">
+      <button onclick="saveNewKey()" style="flex:1;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Save & Continue</button>
+      <button onclick="document.getElementById('change-key-modal').style.display='none'" style="padding:9px 14px;background:none;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;cursor:pointer;font-family:inherit;color:var(--text2);">Cancel</button>
+    </div>
+    <p style="font-size:11px;color:var(--text3);margin-top:10px;text-align:center;">Free tier: 1,500 requests/day per key · No credit card needed</p>
+  </div>
+</div>
+
 <!-- Name + Key Modal -->
 <div id="name-modal">
   <div id="name-box">
@@ -238,6 +258,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <span class="badge badge-level" id="level-badge">Beginner</span>
       <span class="badge badge-type" id="type-badge">Concept</span>
       <span id="user-tag"><i class="ti ti-user" style="font-size:12px"></i> <span id="user-name-tag"></span></span>
+      <button onclick="showChangeKey()" style="margin-left:8px;font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit;" title="Update API key if quota is exceeded"><i class="ti ti-key" style="font-size:11px"></i> Change key</button>
     </div>
 
     <!-- Concept Card -->
@@ -765,7 +786,12 @@ function addErrorMessage(text) {
   const chat = document.getElementById("chat-area");
   const msg = document.createElement("div");
   msg.className = "msg ai";
-  msg.innerHTML = `<div class="avatar ai-av"><i class="ti ti-alert-circle"></i></div><div class="bubble" style="color:var(--danger-text);border-color:var(--danger-border)">${esc(text)}</div>`;
+  const isQuota = text.toLowerCase().includes("quota") || text.toLowerCase().includes("exceeded") || text.toLowerCase().includes("authentication");
+  msg.innerHTML = `<div class="avatar ai-av"><i class="ti ti-alert-circle"></i></div>
+    <div class="bubble" style="color:var(--danger-text);border-color:var(--danger-border)">
+      ${esc(text)}
+      ${isQuota ? `<br><br><button onclick="showChangeKey()" style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:12px;cursor:pointer;font-family:inherit;margin-top:4px;">🔑 Update API Key</button>` : ""}
+    </div>`;
   chat.appendChild(msg); chat.scrollTop = chat.scrollHeight;
 }
 
@@ -797,6 +823,28 @@ async function submitAnswer() {
 async function askHint() {
   if(!currentTopic||isLoading) return;
   await sendToAI("Give me a hint without revealing the full answer.");
+}
+
+function showChangeKey() {
+  document.getElementById("new-key-input").value = "";
+  document.getElementById("change-key-modal").style.display = "flex";
+}
+
+function saveNewKey() {
+  const val = document.getElementById("new-key-input").value.trim();
+  if(!val) { alert("Please paste your new API key."); return; }
+  geminiKey = val;
+  localStorage.setItem("sql_gemini_key", val);
+  document.getElementById("change-key-modal").style.display = "none";
+  // Retry current topic if one was active
+  if(currentTopic) {
+    const chat = document.getElementById("chat-area");
+    const msg = document.createElement("div");
+    msg.className = "msg ai";
+    msg.innerHTML = `<div class="avatar ai-av"><i class="ti ti-robot"></i></div><div class="bubble" style="color:var(--success-text);border-color:var(--success-border)">✅ New key saved! Click the topic again to continue.</div>`;
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+  }
 }
 
 function esc(t) { return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
