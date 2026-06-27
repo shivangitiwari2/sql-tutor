@@ -657,7 +657,21 @@ async function sendToAI(userMessage, addToHistory=true) {
       else if(isWrong) { topicStats[currentTopic.id].total++; }
     }
 
-    if(isCorrect && topicStats[currentTopic.id].correct >= 2) {
+    // Show progress indicator
+    if(addToHistory && (isCorrect || isWrong)) {
+      const s = topicStats[currentTopic.id];
+      const correct = s.correct || 0;
+      const dots = Array.from({length:5}, (_,i) =>
+        `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${i < correct ? '#16a34a' : 'var(--border)'};margin:0 2px;"></span>`
+      ).join("");
+      const progressMsg = document.createElement("div");
+      progressMsg.style.cssText = "text-align:center;padding:6px;font-size:12px;color:var(--text3);";
+      progressMsg.innerHTML = `${dots} <span style="margin-left:6px">${correct}/5 correct to complete topic</span>`;
+      document.getElementById("chat-area").appendChild(progressMsg);
+      document.getElementById("chat-area").scrollTop = 99999;
+    }
+
+    if(isCorrect && topicStats[currentTopic.id].correct >= 5) {
       topicStats[currentTopic.id].done = true;
       updateProgress();
       buildSidebar();
