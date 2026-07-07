@@ -590,7 +590,7 @@ async function beginChat() {
 
   const startMsg = `Ask me ONE practice question about "${topic.label}". ${difficultyNote}
 ${isMCQ
-    ? 'Make it multiple choice with 4 options. End with JSON on its own line: {"mcq":["A. text","B. text","C. text","D. text"],"answer":"A"}'
+    ? 'Make it multiple choice with 4 options. ALL 4 options must be fully written out — never leave any blank. End with JSON on its own line: {"mcq":["A. complete text","B. complete text","C. complete text","D. complete text"],"answer":"A"}'
     : 'Ask me to write a SQL query. Use a simple table like employees, orders, students, or products.'}
 Do not re-explain the concept — just ask the question directly.`;
 
@@ -625,7 +625,7 @@ QUESTION RULES:
 - Ask ONE question at a time
 - If CORRECT: say "Correct! 🎉" with a brief simple explanation of WHY it's right, then ask next question
 - If WRONG: say what's wrong in plain English, give a real-world analogy to explain, show correct answer, then give a similar NEW question to try again
-- For MCQ: end your response with JSON on its own line: {"mcq":["A. text","B. text","C. text","D. text"],"answer":"B"}
+- For MCQ: end your response with a JSON block on its own line. ALL 4 options must have complete text — NEVER leave any option blank or empty. Example format: {"mcq":["A. First complete option","B. Second complete option","C. Third complete option","D. Fourth complete option"],"answer":"B"}
 - For SQL queries: after evaluation always show the correct SQL and explain each part in simple terms
 - Keep responses concise — 4-6 sentences max
 - Never say something is correct when it is wrong`;
@@ -838,8 +838,18 @@ function renderAIMessage(text) {
 }
 
 function renderMCQ(data) {
-  const letters=["A","B","C","D"];
-  return `<div class="mcq-options">${data.mcq.map((opt,i)=>
+  const letters = ["A","B","C","D"];
+  // Validate — if any option is empty or missing, don't render MCQ
+  if(!data.mcq || data.mcq.length < 4) return "";
+  const hasEmpty = data.mcq.some(opt => !opt || opt.trim() === "" || opt.trim() === "A." || opt.trim() === "B." || opt.trim() === "C." || opt.trim() === "D.");
+  if(hasEmpty) {
+    // Ask AI to resend proper options
+    setTimeout(() => {
+      sendToAI("The MCQ options seem incomplete. Please resend the question with all 4 complete options filled in properly.", true);
+    }, 500);
+    return `<div style="color:var(--warning-text);font-size:13px;margin-top:8px;">⚠️ Options didn't load properly — fetching again...</div>`;
+  }
+  return `<div class="mcq-options">${data.mcq.map((opt, i) =>
     `<button class="mcq-btn" onclick="pickMCQ(this,'${letters[i]}','${data.answer}')">${opt}</button>`
   ).join("")}</div>`;
 }
