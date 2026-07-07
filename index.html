@@ -338,8 +338,9 @@ const TOPICS = [
 let currentTopic = null;
 let conversationHistory = [];
 let isLoading = false;
-let geminiKey = localStorage.getItem("sql_groq_key") || "";
+let geminiKey = localStorage.getItem("sql_groq_key") || localStorage.getItem("sql_gemini_key") || "";
 let userName = localStorage.getItem("sql_user_name") || "";
+if(geminiKey) localStorage.setItem("sql_groq_key", geminiKey);
 let topicStats = JSON.parse(localStorage.getItem("sql_topic_stats") || "{}");
 // topicStats[id] = { correct: 0, total: 0, done: false, timeSpent: 0 }
 let sessionStart = null;
