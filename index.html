@@ -597,38 +597,76 @@ Do not re-explain the concept — just ask the question directly.`;
   await sendToAI(startMsg, false);
 }
 
+// Strict scope: what each topic is ALLOWED to use
+const TOPIC_SCOPE = {
+  select_basics:   { allowed: ["SELECT", "FROM", "SELECT *", "column aliases with AS", "selecting specific columns"], forbidden: ["WHERE", "ORDER BY", "JOIN", "GROUP BY", "HAVING", "subqueries", "NOT IN", "IN", "DISTINCT", "NULL", "aggregate functions"] },
+  where_filter:    { allowed: ["SELECT", "FROM", "WHERE", "AND", "OR", "NOT", "comparison operators like =, >, <, >=, <=, !="], forbidden: ["JOIN", "GROUP BY", "HAVING", "subqueries", "ORDER BY", "aggregate functions"] },
+  order_limit:     { allowed: ["SELECT", "FROM", "WHERE", "ORDER BY", "ASC", "DESC", "LIMIT"], forbidden: ["JOIN", "GROUP BY", "HAVING", "subqueries", "aggregate functions"] },
+  distinct_null:   { allowed: ["SELECT", "FROM", "WHERE", "DISTINCT", "NULL", "IS NULL", "IS NOT NULL"], forbidden: ["JOIN", "GROUP BY", "HAVING", "subqueries", "aggregate functions"] },
+  aggregate:       { allowed: ["SELECT", "FROM", "WHERE", "COUNT", "SUM", "AVG", "MIN", "MAX"], forbidden: ["GROUP BY", "HAVING", "JOIN", "subqueries", "window functions"] },
+  group_by:        { allowed: ["SELECT", "FROM", "WHERE", "GROUP BY", "COUNT", "SUM", "AVG", "MIN", "MAX"], forbidden: ["HAVING", "JOIN", "subqueries", "window functions"] },
+  having:          { allowed: ["SELECT", "FROM", "WHERE", "GROUP BY", "HAVING", "aggregate functions"], forbidden: ["JOIN", "subqueries", "window functions"] },
+  joins_intro:     { allowed: ["concept of joining tables", "what a JOIN does", "primary key", "foreign key"], forbidden: ["actual JOIN syntax", "subqueries", "window functions"] },
+  inner_join:      { allowed: ["SELECT", "FROM", "INNER JOIN", "ON", "WHERE", "table aliases"], forbidden: ["LEFT JOIN", "RIGHT JOIN", "OUTER JOIN", "subqueries", "window functions"] },
+  left_right_join: { allowed: ["SELECT", "FROM", "LEFT JOIN", "RIGHT JOIN", "ON", "WHERE", "NULL in results"], forbidden: ["FULL OUTER JOIN", "CROSS JOIN", "subqueries", "window functions"] },
+  self_cross_join: { allowed: ["SELECT", "FROM", "SELF JOIN", "CROSS JOIN", "table aliases"], forbidden: ["subqueries", "window functions"] },
+  subqueries:      { allowed: ["SELECT", "FROM", "WHERE", "subqueries", "nested SELECT", "IN", "EXISTS", "correlated subqueries"], forbidden: ["window functions", "CTEs"] },
+  cte:             { allowed: ["WITH", "CTE", "common table expressions", "SELECT", "FROM", "WHERE"], forbidden: ["window functions", "recursive CTEs"] },
+  window_intro:    { allowed: ["concept of window functions", "OVER()", "what window functions do vs GROUP BY"], forbidden: ["specific window functions like RANK, ROW_NUMBER, LEAD, LAG"] },
+  row_rank:        { allowed: ["ROW_NUMBER()", "RANK()", "DENSE_RANK()", "OVER()", "ORDER BY inside OVER"], forbidden: ["PARTITION BY", "LEAD", "LAG"] },
+  lead_lag:        { allowed: ["LEAD()", "LAG()", "OVER()", "ORDER BY inside OVER"], forbidden: ["PARTITION BY"] },
+  partitionby:     { allowed: ["PARTITION BY", "OVER()", "ROW_NUMBER()", "RANK()", "LEAD()", "LAG()", "combined window functions"], forbidden: [] },
+  indexes:         { allowed: ["what an index is", "CREATE INDEX", "types of indexes", "when to use indexes", "performance impact"], forbidden: ["query execution plans", "EXPLAIN"] },
+  explain_plan:    { allowed: ["EXPLAIN", "query execution plan", "reading query plans", "indexes in plans"], forbidden: [] },
+  transactions:    { allowed: ["BEGIN", "COMMIT", "ROLLBACK", "ACID properties", "what transactions do"], forbidden: [] },
+};
+
 // AI
 function buildSystem(topic) {
   const s = topicStats[topic.id] || {};
   const correct = s.correct || 0;
   const isHardMode = correct >= 5;
+  const scope = TOPIC_SCOPE[topic.id] || { allowed: [topic.label], forbidden: [] };
 
   const difficultyInstruction = isHardMode
-    ? `DIFFICULTY: HARD MODE (learner has answered 5 easy questions correctly).
-Now ask interview-level, tricky questions. Include edge cases, common mistakes, performance considerations, or multi-step scenarios. These should challenge even someone who knows the basics well.`
-    : `DIFFICULTY: BEGINNER/EASY (question ${correct + 1} of 5 easy questions).
-Ask straightforward questions that test basic understanding of the concept.`;
+    ? `DIFFICULTY: HARD MODE (learner has passed 5 easy questions).
+Ask tricky, interview-level questions BUT ONLY using concepts from the allowed list below.
+Hard mode means: trickier scenarios, edge cases, and common mistakes — NOT new SQL concepts.
+For example for SELECT basics hard mode: ask about selecting with aliases, selecting from multiple columns, what happens with SELECT *, NULL values in SELECT — all still within SELECT only.`
+    : `DIFFICULTY: EASY (question ${correct + 1} of 5).
+Ask a simple, clear question testing basic understanding. One concept at a time.`;
 
-  return `You are a warm, patient SQL tutor teaching "${topic.label}".
+  const allowedList = scope.allowed.join(", ");
+  const forbiddenList = scope.forbidden.length > 0 ? scope.forbidden.join(", ") : "nothing specific";
 
-TEACHING STYLE — VERY IMPORTANT:
-- Always explain like you're talking to someone who has NEVER seen SQL or databases before
-- Use real-world analogies: compare tables to Excel sheets, databases to filing cabinets, SELECT to choosing columns in a spreadsheet
-- Use simple relatable examples: employees, students, orders, products — tables people can visualise
-- Avoid jargon. Instead of "retrieves records from a relation", say "gets rows from a table"
-- When something is wrong, explain it like a friend would: "Ah, good try! The issue is..."
-- Use everyday comparisons: "WHERE is like a filter in Excel", "JOIN is like combining two Excel sheets using a common column"
+  return `You are a warm, patient SQL tutor teaching ONLY the topic: "${topic.label}".
+
+STRICT TOPIC BOUNDARY — THIS IS THE MOST IMPORTANT RULE:
+✅ ONLY use these concepts: ${allowedList}
+❌ NEVER use or mention these in your questions: ${forbiddenList}
+❌ Do NOT introduce any SQL concept that is not in the allowed list above, even in hard mode
+❌ If a question naturally requires a forbidden concept, change the question — do not use the forbidden concept
+
+WHY THIS MATTERS: The learner ONLY knows "${topic.label}" right now. They have not learned ${forbiddenList} yet. Using those concepts will confuse and discourage them.
+
+TEACHING STYLE:
+- Explain like talking to someone who has NEVER coded before
+- Use real-world analogies: database = filing cabinet, table = Excel sheet, SELECT = choosing columns to show
+- Use simple relatable tables: employees, students, orders, products
+- When wrong: explain in plain English like a friend — "Good try! The issue is..."
+- Use everyday comparisons: WHERE = Excel filter, JOIN = combining two sheets
 
 ${difficultyInstruction}
 
 QUESTION RULES:
 - Ask ONE question at a time
-- If CORRECT: say "Correct! 🎉" with a brief simple explanation of WHY it's right, then ask next question
-- If WRONG: say what's wrong in plain English, give a real-world analogy to explain, show correct answer, then give a similar NEW question to try again
-- For MCQ: end your response with a JSON block on its own line. ALL 4 options must have complete text — NEVER leave any option blank or empty. Example format: {"mcq":["A. First complete option","B. Second complete option","C. Third complete option","D. Fourth complete option"],"answer":"B"}
-- For SQL queries: after evaluation always show the correct SQL and explain each part in simple terms
-- Keep responses concise — 4-6 sentences max
+- If CORRECT: say "Correct! 🎉" briefly explain why, then ask next question (still within allowed concepts only)
+- If WRONG: explain what's wrong simply, show correct answer, give a new similar question
+- For MCQ: end with JSON on its own line. ALL 4 options must be complete — never blank: {"mcq":["A. full text","B. full text","C. full text","D. full text"],"answer":"B"}
+- For SQL queries: show correct SQL after evaluation, explain each part simply
+- Keep responses to 4-6 sentences max
 - Never say something is correct when it is wrong`;
+}
 }
 
 async function callGroq(messages, systemPrompt) {
