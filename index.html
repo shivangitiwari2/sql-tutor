@@ -531,12 +531,18 @@ async function loadTopic(topic) {
 
   // Generate concept card via AI
   const cardPrompt = `Generate a concept card for SQL topic: "${topic.label}" (${topic.level} level).
+
+IMPORTANT: Write for someone who has NEVER seen SQL before. Use real-world analogies:
+- Think of a database as a filing cabinet, a table as a spreadsheet/Excel sheet, rows as individual records, columns as headers
+- Use simple comparisons: "SELECT is like choosing which columns to show in Excel", "WHERE is like a filter", "JOIN is like combining two sheets using a common column"
+- Avoid technical jargon — use plain everyday English
+
 Return ONLY a JSON object like this:
 {
-  "tagline": "one line description",
-  "explanation": "2-3 sentence clear explanation for a beginner",
-  "example": "SELECT column FROM table WHERE condition;",
-  "points": ["key point 1", "key point 2", "key point 3"]
+  "tagline": "one simple sentence explaining what this does in plain English",
+  "explanation": "2-3 sentence explanation using a real-world analogy a non-technical person would understand",
+  "example": "simple SQL example using employees or students table",
+  "points": ["simple tip 1 with analogy", "simple tip 2", "simple tip 3 — what to watch out for"]
 }
 No extra text, just the JSON.`;
 
@@ -574,24 +580,55 @@ function startPractice() {
 async function beginChat() {
   const topic = currentTopic;
   const isMCQ = topic.type.includes("MCQ");
-  const startMsg = `Now ask me ONE practice question about "${topic.label}" at ${topic.level} level. ${isMCQ
-    ? 'Make it a multiple choice question with 4 options. End with JSON on its own line: {"mcq":["A. text","B. text","C. text","D. text"],"answer":"A"}'
-    : 'Ask me to write a SQL query using a simple table like employees, orders, or students.'}
-Don't re-explain the concept — just ask the question directly.`;
+  const s = topicStats[topic.id] || {};
+  const correct = s.correct || 0;
+  const isHardMode = correct >= 5;
+
+  const difficultyNote = isHardMode
+    ? `This is HARD MODE — ask an interview-level tricky question with edge cases or real-world complexity.`
+    : `This is question ${correct + 1} of 5 easy questions — keep it simple and beginner-friendly.`;
+
+  const startMsg = `Ask me ONE practice question about "${topic.label}". ${difficultyNote}
+${isMCQ
+    ? 'Make it multiple choice with 4 options. End with JSON on its own line: {"mcq":["A. text","B. text","C. text","D. text"],"answer":"A"}'
+    : 'Ask me to write a SQL query. Use a simple table like employees, orders, students, or products.'}
+Do not re-explain the concept — just ask the question directly.`;
 
   await sendToAI(startMsg, false);
 }
 
 // AI
 function buildSystem(topic) {
-  return `You are a friendly expert SQL tutor. Topic: "${topic.label}" (${topic.level}).
-- Ask one question at a time
-- If CORRECT: say "Correct!" briefly, then ask a harder follow-up
-- If WRONG: explain exactly what's wrong and why, show correct answer, give new similar question
-- For MCQ: end response with JSON on its own line: {"mcq":["A. text","B. text","C. text","D. text"],"answer":"B"}
-- For SQL: after evaluation show correct SQL with brief explanation
-- Keep responses concise — 3-5 sentences max
-- Never say something is correct when it's wrong`;
+  const s = topicStats[topic.id] || {};
+  const correct = s.correct || 0;
+  const isHardMode = correct >= 5;
+
+  const difficultyInstruction = isHardMode
+    ? `DIFFICULTY: HARD MODE (learner has answered 5 easy questions correctly).
+Now ask interview-level, tricky questions. Include edge cases, common mistakes, performance considerations, or multi-step scenarios. These should challenge even someone who knows the basics well.`
+    : `DIFFICULTY: BEGINNER/EASY (question ${correct + 1} of 5 easy questions).
+Ask straightforward questions that test basic understanding of the concept.`;
+
+  return `You are a warm, patient SQL tutor teaching "${topic.label}".
+
+TEACHING STYLE — VERY IMPORTANT:
+- Always explain like you're talking to someone who has NEVER seen SQL or databases before
+- Use real-world analogies: compare tables to Excel sheets, databases to filing cabinets, SELECT to choosing columns in a spreadsheet
+- Use simple relatable examples: employees, students, orders, products — tables people can visualise
+- Avoid jargon. Instead of "retrieves records from a relation", say "gets rows from a table"
+- When something is wrong, explain it like a friend would: "Ah, good try! The issue is..."
+- Use everyday comparisons: "WHERE is like a filter in Excel", "JOIN is like combining two Excel sheets using a common column"
+
+${difficultyInstruction}
+
+QUESTION RULES:
+- Ask ONE question at a time
+- If CORRECT: say "Correct! 🎉" with a brief simple explanation of WHY it's right, then ask next question
+- If WRONG: say what's wrong in plain English, give a real-world analogy to explain, show correct answer, then give a similar NEW question to try again
+- For MCQ: end your response with JSON on its own line: {"mcq":["A. text","B. text","C. text","D. text"],"answer":"B"}
+- For SQL queries: after evaluation always show the correct SQL and explain each part in simple terms
+- Keep responses concise — 4-6 sentences max
+- Never say something is correct when it is wrong`;
 }
 
 async function callGroq(messages, systemPrompt) {
@@ -661,17 +698,37 @@ async function sendToAI(userMessage, addToHistory=true) {
     if(addToHistory && (isCorrect || isWrong)) {
       const s = topicStats[currentTopic.id];
       const correct = s.correct || 0;
-      const dots = Array.from({length:5}, (_,i) =>
-        `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${i < correct ? '#16a34a' : 'var(--border)'};margin:0 2px;"></span>`
+      const isHardMode = correct > 5;
+      const wasJustHardTransition = correct === 5 && isCorrect;
+
+      // Show hard mode banner when transitioning
+      if(wasJustHardTransition) {
+        const banner = document.createElement("div");
+        banner.style.cssText = "text-align:center;padding:10px 16px;margin:8px 0;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;font-size:13px;color:#7c3aed;font-weight:500;";
+        banner.innerHTML = `🔥 Easy level complete! Now entering <strong>Hard Mode</strong> — interview-level questions incoming!`;
+        document.getElementById("chat-area").appendChild(banner);
+      }
+
+      // Progress dots — easy phase (1-5) and hard phase (6-10)
+      const phase = correct <= 5 ? "easy" : "hard";
+      const phaseCorrect = correct <= 5 ? correct : correct - 5;
+      const phaseTotal = 5;
+      const dots = Array.from({length: phaseTotal}, (_, i) =>
+        `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${i < phaseCorrect ? (phase === 'hard' ? '#7c3aed' : '#16a34a') : 'var(--border)'};margin:0 2px;transition:background 0.3s;"></span>`
       ).join("");
+
+      const label = phase === "easy"
+        ? `${phaseCorrect}/5 easy ✓ then 5 hard to master`
+        : `<span style="color:#7c3aed;font-weight:500">🔥 Hard mode:</span> ${phaseCorrect}/5`;
+
       const progressMsg = document.createElement("div");
       progressMsg.style.cssText = "text-align:center;padding:6px;font-size:12px;color:var(--text3);";
-      progressMsg.innerHTML = `${dots} <span style="margin-left:6px">${correct}/5 correct to complete topic</span>`;
+      progressMsg.innerHTML = `${dots} <span style="margin-left:6px">${label}</span>`;
       document.getElementById("chat-area").appendChild(progressMsg);
       document.getElementById("chat-area").scrollTop = 99999;
     }
 
-    if(isCorrect && topicStats[currentTopic.id].correct >= 5) {
+    if(isCorrect && topicStats[currentTopic.id].correct >= 10) {
       topicStats[currentTopic.id].done = true;
       updateProgress();
       buildSidebar();
