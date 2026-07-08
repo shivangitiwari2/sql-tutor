@@ -348,6 +348,8 @@ if(geminiKey) localStorage.setItem("sql_groq_key", geminiKey);
 let topicStats = JSON.parse(localStorage.getItem("sql_topic_stats") || "{}");
 // topicStats[id] = { correct: 0, total: 0, done: false, timeSpent: 0 }
 let sessionStart = null;
+let hardWrongAnswers = []; // stores {question, userAnswer, correct} for hard mode review
+let hardQuestionsAsked = 0; // track how many hard questions have been asked
 let topicSummaryData = null;
 
 function saveSetup() {
@@ -526,6 +528,8 @@ async function loadTopic(topic) {
   currentTopic = topic;
   conversationHistory = [];
   sessionStart = Date.now();
+  hardWrongAnswers = [];
+  hardQuestionsAsked = 0;
 
   document.querySelectorAll(".topic-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("tbtn-" + topic.id)?.classList.add("active");
@@ -645,13 +649,19 @@ function buildSystem(topic) {
   const isHardMode = correct >= 5;
   const scope = TOPIC_SCOPE[topic.id] || { allowed: [topic.label], forbidden: [] };
 
+  const hardQ = hardQuestionsAsked + 1;
   const difficultyInstruction = isHardMode
-    ? `DIFFICULTY: HARD MODE (learner has passed 5 easy questions).
-Ask tricky, interview-level questions BUT ONLY using concepts from the allowed list below.
-Hard mode means: trickier scenarios, edge cases, and common mistakes — NOT new SQL concepts.
-For example for SELECT basics hard mode: ask about selecting with aliases, selecting from multiple columns, what happens with SELECT *, NULL values in SELECT — all still within SELECT only.`
-    : `DIFFICULTY: EASY (question ${correct + 1} of 5).
-Ask a simple, clear question testing basic understanding. One concept at a time.`;
+    ? `DIFFICULTY: HARD MODE — QUIZ MODE (hard question ${hardQ} of 5).
+CRITICAL RULES FOR HARD MODE:
+- Ask ONE interview-level tricky question within allowed concepts only
+- When learner answers: say ONLY "Correct! ✅" OR "Incorrect ❌" — ONE WORD VERDICT ONLY
+- DO NOT explain why they are wrong in hard mode — no explanation at all
+- DO NOT reveal the correct answer in hard mode
+- DO NOT give hints, encouragement, or teaching in hard mode
+- Immediately ask the next hard question after giving verdict
+- All explanations will be shown at the end after all 5 hard questions are done`
+    : `DIFFICULTY: EASY (question ${correct + 1} of 5 easy questions).
+Ask a simple, clear question. One concept at a time. Explain mistakes fully when wrong.`;
 
   const allowedList = scope.allowed.join(", ");
   const forbiddenList = scope.forbidden.length > 0 ? scope.forbidden.join(", ") : "nothing specific";
@@ -740,40 +750,53 @@ async function sendToAI(userMessage, addToHistory=true) {
 
     // Track stats
     const isCorrect = reply.match(/\bcorrect\b|\bwell done\b|\bgreat job\b|\bperfect\b|\bexactly right\b/i);
-    const isWrong = reply.match(/\bwrong\b|\bincorrect\b|\bnot quite\b|\bclose but\b/i);
+    const isWrong = reply.match(/\bwrong\b|\bincorrect\b|\bnot quite\b|\bclose but\b|Incorrect ❌/i);
 
     if(!topicStats[currentTopic.id]) topicStats[currentTopic.id] = { correct:0, total:0, done:false };
+
+    const currentCorrect = topicStats[currentTopic.id].correct || 0;
+    const isInHardMode = currentCorrect >= 5;
+
     if(addToHistory) {
       if(isCorrect) { topicStats[currentTopic.id].correct++; topicStats[currentTopic.id].total++; }
       else if(isWrong) { topicStats[currentTopic.id].total++; }
+
+      // In hard mode, track wrong answers for end review
+      if(isInHardMode && addToHistory) {
+        hardQuestionsAsked++;
+        if(isWrong) {
+          // Store the last user message as the wrong answer
+          const lastUserMsg = conversationHistory.filter(m => m.role === "user").slice(-1)[0];
+          hardWrongAnswers.push({
+            question: conversationHistory.filter(m => m.role === "model").slice(-2)[0]?.parts?.[0]?.text || "Previous question",
+            userAnswer: lastUserMsg?.parts?.[0]?.text || userMessage,
+          });
+        }
+      }
     }
 
     // Show progress indicator
     if(addToHistory && (isCorrect || isWrong)) {
       const s = topicStats[currentTopic.id];
       const correct = s.correct || 0;
-      const isHardMode = correct > 5;
+      const isHardMode = correct > 5 || (correct === 5 && isCorrect);
       const wasJustHardTransition = correct === 5 && isCorrect;
 
-      // Show hard mode banner when transitioning
       if(wasJustHardTransition) {
         const banner = document.createElement("div");
         banner.style.cssText = "text-align:center;padding:10px 16px;margin:8px 0;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;font-size:13px;color:#7c3aed;font-weight:500;";
-        banner.innerHTML = `🔥 Easy level complete! Now entering <strong>Hard Mode</strong> — interview-level questions incoming!`;
+        banner.innerHTML = `🔥 Easy level complete! Entering <strong>Hard Mode</strong> — quiz style. No explanations until the end!`;
         document.getElementById("chat-area").appendChild(banner);
       }
 
-      // Progress dots — easy phase (1-5) and hard phase (6-10)
       const phase = correct <= 5 ? "easy" : "hard";
       const phaseCorrect = correct <= 5 ? correct : correct - 5;
-      const phaseTotal = 5;
-      const dots = Array.from({length: phaseTotal}, (_, i) =>
-        `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${i < phaseCorrect ? (phase === 'hard' ? '#7c3aed' : '#16a34a') : 'var(--border)'};margin:0 2px;transition:background 0.3s;"></span>`
+      const dots = Array.from({length:5}, (_,i) =>
+        `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${i < phaseCorrect ? (phase==='hard'?'#7c3aed':'#16a34a') : 'var(--border)'};margin:0 2px;"></span>`
       ).join("");
-
       const label = phase === "easy"
         ? `${phaseCorrect}/5 easy ✓ then 5 hard to master`
-        : `<span style="color:#7c3aed;font-weight:500">🔥 Hard mode:</span> ${phaseCorrect}/5`;
+        : `<span style="color:#7c3aed;font-weight:500">🔥 Hard quiz:</span> ${phaseCorrect}/5 — explanations at the end`;
 
       const progressMsg = document.createElement("div");
       progressMsg.style.cssText = "text-align:center;padding:6px;font-size:12px;color:var(--text3);";
@@ -782,6 +805,7 @@ async function sendToAI(userMessage, addToHistory=true) {
       document.getElementById("chat-area").scrollTop = 99999;
     }
 
+    // Check completion: 10 correct total = done
     if(isCorrect && topicStats[currentTopic.id].correct >= 10) {
       topicStats[currentTopic.id].done = true;
       updateProgress();
@@ -789,7 +813,8 @@ async function sendToAI(userMessage, addToHistory=true) {
       const s = topicStats[currentTopic.id];
       const acc = Math.round((s.correct/s.total)*100);
       logToSheets(userName, currentTopic.label, "Completed", s.correct, s.total, acc);
-      setTimeout(() => showTopicSummary(), 1000);
+      // Show hard mode review first, then summary
+      setTimeout(() => showHardModeReview(), 800);
     } else if(addToHistory && (isCorrect || isWrong)) {
       updateProgress();
       buildSidebar();
@@ -802,6 +827,107 @@ async function sendToAI(userMessage, addToHistory=true) {
   }
   isLoading = false;
   setButtonState(false);
+}
+
+// Hard mode end review
+async function showHardModeReview() {
+  const chat = document.getElementById("chat-area");
+
+  if(hardWrongAnswers.length === 0) {
+    // Perfect score — no wrong answers!
+    const perfect = document.createElement("div");
+    perfect.className = "msg ai";
+    perfect.innerHTML = `<div class="avatar ai-av"><i class="ti ti-robot"></i></div>
+      <div class="bubble" style="border-color:var(--success-border);background:var(--success-bg)">
+        <strong>🌟 Perfect hard mode score!</strong> You got all 5 hard questions correct. That's genuinely impressive — you've mastered this topic inside out!<br><br>
+        <button onclick="showTopicSummary()" style="margin-top:8px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:13px;cursor:pointer;font-family:inherit;">See your cheat sheet →</button>
+      </div>`;
+    chat.appendChild(perfect);
+    chat.scrollTop = chat.scrollHeight;
+    return;
+  }
+
+  // Show review header
+  const header = document.createElement("div");
+  header.className = "msg ai";
+  header.innerHTML = `<div class="avatar ai-av"><i class="ti ti-robot"></i></div>
+    <div class="bubble" style="border-color:#e9d5ff;background:#faf5ff;">
+      <strong>📋 Hard Mode Review</strong><br><br>
+      You got <strong>${hardWrongAnswers.length}</strong> question${hardWrongAnswers.length > 1 ? 's' : ''} wrong in hard mode. No worries — here's where you went wrong and why. Read through these carefully!
+    </div>`;
+  chat.appendChild(header);
+
+  // Generate explanations for each wrong answer via AI
+  const reviewPrompt = `The learner just completed hard mode for "${currentTopic.label}" but got these questions wrong:
+
+${hardWrongAnswers.map((w, i) => `Question ${i+1}:
+The question asked: ${w.question.substring(0, 300)}
+Learner answered: ${w.userAnswer}`).join("\n\n")}
+
+For EACH wrong answer:
+1. Explain in simple plain English exactly what was wrong and why
+2. Show the correct answer clearly
+3. Give one easy-to-remember tip to avoid this mistake
+
+Use real-world analogies. Be encouraging and kind — they tried hard. Number each explanation clearly (1., 2., etc.)`;
+
+  addTypingIndicator();
+  try {
+    const explanation = await callGroq(
+      [{ role: "user", content: reviewPrompt }],
+      `You are a kind SQL tutor reviewing mistakes after a hard quiz on "${currentTopic.label}". Explain mistakes simply with analogies. Be warm and encouraging.`
+    );
+    removeTypingIndicator();
+
+    const reviewMsg = document.createElement("div");
+    reviewMsg.className = "msg ai";
+    const formatted = explanation
+      .replace(/```sql([\s\S]*?)```/g, (_, c) => `<pre>${esc(c.trim())}</pre>`)
+      .replace(/```([\s\S]*?)```/g, (_, c) => `<pre>${esc(c.trim())}</pre>`)
+      .replace(/`([^`]+)`/g, (_, c) => `<code>${esc(c)}</code>`)
+      .replace(/\*\*(.*?)\*\*/g, (_, c) => `<strong>${c}</strong>`)
+      .replace(/\n/g, "<br>");
+    reviewMsg.innerHTML = `<div class="avatar ai-av"><i class="ti ti-robot"></i></div><div class="bubble">${formatted}</div>`;
+    chat.appendChild(reviewMsg);
+
+    // Encouragement + retry button
+    const encourage = document.createElement("div");
+    encourage.className = "msg ai";
+    encourage.innerHTML = `<div class="avatar ai-av"><i class="ti ti-robot"></i></div>
+      <div class="bubble" style="border-color:var(--success-border);background:var(--success-bg)">
+        <strong>You've got this! 💪</strong> Now that you understand where you went wrong, try the topic again — you'll nail it this time.<br><br>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button onclick="retryHardMode()" style="padding:8px 16px;background:#7c3aed;color:#fff;border:none;border-radius:var(--radius);font-size:13px;cursor:pointer;font-family:inherit;">🔄 Retry this topic</button>
+          <button onclick="showTopicSummary()" style="padding:8px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);font-size:13px;cursor:pointer;font-family:inherit;">📋 See cheat sheet first</button>
+        </div>
+      </div>`;
+    chat.appendChild(encourage);
+    chat.scrollTop = chat.scrollHeight;
+
+  } catch(e) {
+    removeTypingIndicator();
+    addErrorMessage("Could not load review: " + e.message);
+  }
+}
+
+function retryHardMode() {
+  // Reset only hard mode progress, keep easy progress
+  if(currentTopic && topicStats[currentTopic.id]) {
+    topicStats[currentTopic.id].correct = 5; // keep easy done
+    topicStats[currentTopic.id].total = Math.max(5, topicStats[currentTopic.id].total - hardQuestionsAsked);
+    topicStats[currentTopic.id].done = false;
+    hardWrongAnswers = [];
+    hardQuestionsAsked = 0;
+    updateProgress();
+    buildSidebar();
+  }
+  // Clear chat and restart from hard mode
+  document.getElementById("chat-area").innerHTML = "";
+  const banner = document.createElement("div");
+  banner.style.cssText = "text-align:center;padding:10px 16px;margin:8px 0;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;font-size:13px;color:#7c3aed;font-weight:500;";
+  banner.innerHTML = `🔥 Retrying <strong>Hard Mode</strong> — you've reviewed your mistakes, now let's go!`;
+  document.getElementById("chat-area").appendChild(banner);
+  beginChat();
 }
 
 // Summary
