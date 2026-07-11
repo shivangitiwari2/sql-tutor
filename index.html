@@ -621,7 +621,11 @@ Do not re-explain the concept — just ask the question directly.`;
 // Strict scope: what each topic is ALLOWED to use
 const TOPIC_SCOPE = {
   select_basics:   { allowed: ["SELECT", "FROM", "SELECT *", "column aliases with AS", "selecting specific columns"], forbidden: ["WHERE", "ORDER BY", "JOIN", "GROUP BY", "HAVING", "subqueries", "NOT IN", "IN", "DISTINCT", "NULL", "aggregate functions"] },
-  where_filter:    { allowed: ["SELECT", "FROM", "WHERE", "AND", "OR", "NOT", "comparison operators like =, >, <, >=, <=, !="], forbidden: ["JOIN", "GROUP BY", "HAVING", "subqueries", "ORDER BY", "aggregate functions"] },
+  where_filter:    {
+    allowed: ["SELECT", "FROM", "WHERE", "AND", "OR", "NOT", "=", ">", "<", ">=", "<=", "!=", "<>", "BETWEEN", "LIKE", "IN", "simple string and number comparisons"],
+    forbidden: ["JOIN", "GROUP BY", "HAVING", "subqueries", "ORDER BY", "aggregate functions like COUNT SUM AVG", "window functions", "CASE", "EXISTS", "NOT EXISTS"],
+    fixedTable: `Use ONLY this table in ALL questions: employees(id, name, department, salary, age). Never invent other tables or columns not in this list.`
+  },
   order_limit:     { allowed: ["SELECT", "FROM", "WHERE", "ORDER BY", "ASC", "DESC", "LIMIT"], forbidden: ["JOIN", "GROUP BY", "HAVING", "subqueries", "aggregate functions"] },
   distinct_null:   { allowed: ["SELECT", "FROM", "WHERE", "DISTINCT", "NULL", "IS NULL", "IS NOT NULL"], forbidden: ["JOIN", "GROUP BY", "HAVING", "subqueries", "aggregate functions"] },
   aggregate:       { allowed: ["SELECT", "FROM", "WHERE", "COUNT", "SUM", "AVG", "MIN", "MAX"], forbidden: ["GROUP BY", "HAVING", "JOIN", "subqueries", "window functions"] },
@@ -665,14 +669,27 @@ Ask a simple, clear question. One concept at a time. Explain mistakes fully when
 
   const allowedList = scope.allowed.join(", ");
   const forbiddenList = scope.forbidden.length > 0 ? scope.forbidden.join(", ") : "nothing specific";
+  const fixedTable = scope.fixedTable || `Use simple consistent tables: employees(id, name, department, salary, age) or orders(id, customer, amount, date). Stick to the same table throughout the conversation — never switch tables mid-session.`;
 
   return `You are a warm, patient SQL tutor teaching ONLY the topic: "${topic.label}".
+
+ANTI-HALLUCINATION RULES — FOLLOW THESE STRICTLY:
+❌ NEVER invent SQL syntax that doesn't exist
+❌ NEVER say a wrong answer is correct
+❌ NEVER use columns or tables you haven't explicitly defined
+❌ If you're not 100% sure about a SQL rule, ask a simpler question instead
+❌ NEVER accept partial or wrong SQL as correct just to be encouraging
+✅ Always verify: would this SQL actually run in MySQL/PostgreSQL?
+✅ If learner's SQL has even one mistake, it is WRONG — say so clearly
+
+TABLE TO USE:
+${fixedTable}
 
 STRICT TOPIC BOUNDARY — THIS IS THE MOST IMPORTANT RULE:
 ✅ ONLY use these concepts: ${allowedList}
 ❌ NEVER use or mention these in your questions: ${forbiddenList}
-❌ Do NOT introduce any SQL concept that is not in the allowed list above, even in hard mode
-❌ If a question naturally requires a forbidden concept, change the question — do not use the forbidden concept
+❌ Do NOT introduce any SQL concept not in the allowed list, even in hard mode
+❌ If a question naturally requires a forbidden concept, simplify the question
 
 WHY THIS MATTERS: The learner ONLY knows "${topic.label}" right now. They have not learned ${forbiddenList} yet. Using those concepts will confuse and discourage them.
 
